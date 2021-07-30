@@ -1,0 +1,15 @@
+---
+vlans:
+  - name: default
+    vlan_id: 1
+  - name: users_201
+    vlan_id: 201
+  - name: users_202
+    vlan_id: 202
+  - name: users_203
+    vlan_id: 203
+  - name: users_204
+    vlan_id: 204
+  - name: users_205
+    vlan_id: 205
+...

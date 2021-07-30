@@ -1,0 +1,24 @@
+---
+ansible_host: 172.16.100.5
+
+l2_interfaces:
+  - name: port-channel101
+    trunk:
+      native_vlan: 1
+      allowed_vlans: 201, 202, 203, 204, 205
+  - name: Ethernet1/3
+    access:
+      vlan: 201
+  - name: Ethernet1/4
+    access:
+      vlan: 202
+  - name: Ethernet1/5
+    access:
+      vlan: 201
+  - name: Ethernet1/6
+    access:
+      vlan: 201
+  - name: Ethernet1/7
+    access:
+      vlan: 201
+...

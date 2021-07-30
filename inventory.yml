@@ -1,0 +1,18 @@
+---
+all:
+  children:
+    ios_hosts:
+      hosts:
+        swCore-1:
+        swCore-2:
+    nxos_hosts:
+      hosts:
+        swAgg-1:
+        swAgg-2:
+        swAcc-1:
+    fabric_switches:
+      hosts:
+        swAgg-1:
+        swAgg-2:
+        swAcc-1:
+...

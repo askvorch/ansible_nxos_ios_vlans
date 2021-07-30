@@ -1,0 +1,56 @@
+---
+stages:
+  - lint
+  - test  
+  - backup
+  - deploy
+
+yamli_lint:
+  stage: lint
+  tags:
+    - verify
+  script:
+    - yamllint *.yml ./host_vars/*.yml ./group_vars/*.yml
+
+ansible_lint:
+  stage: lint
+  tags:
+    - verify
+  script:
+    - ansible-lint check_reachability.yml
+    - ansible-lint backup_cfgs.yml
+    - ansible-lint configure_vlans.yml
+    - ansible-lint configure_additional_services.yml
+
+ansible_syntax_check:
+  stage: lint
+  tags:
+    - verify
+  script:
+    - ansible-playbook --syntax-check check_reachability.yml
+    - ansible-playbook --syntax-check backup_cfgs.yml
+    - ansible-playbook --syntax-check configure_vlans.yml
+    - ansible-playbook --syntax-check configure_additional_services.yml 
+
+check_reachability:
+  stage: test
+  tags:
+    - verify
+  script:
+    - ansible-playbook --vault-password-file /home/vorch/ansible_vault.pwd check_reachability.yml
+
+backup_config:
+  stage: backup
+  tags:
+    - backup
+  script:
+    - ansible-playbook --vault-password-file /home/vorch/ansible_vault.pwd backup_cfgs.yml
+
+deploy_new_config:
+  stage: deploy
+  tags:
+    - deploy
+  script:
+    - ansible-playbook --vault-password-file /home/vorch/ansible_vault.pwd configure_vlans.yml
+    - ansible-playbook --vault-password-file /home/vorch/ansible_vault.pwd configure_additional_services.yml
+...

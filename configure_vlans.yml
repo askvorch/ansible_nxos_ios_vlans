@@ -1,0 +1,99 @@
+---
+- name: Configure VLANs on fabric switches
+  hosts: fabric_switches
+
+  tasks:
+    - name: Edit VLANs
+      cisco.nxos.nxos_vlans:
+        config: "{{ vlans }}"
+        state: overridden
+
+
+- name: Configure L2 interfaces on swAcc-1
+  hosts: swAcc-1
+
+  tasks:
+    - name: Edit L2 interfaces
+      cisco.nxos.nxos_l2_interfaces:
+        config: "{{ l2_interfaces }}"
+        state: merged
+
+
+- name: Configure L2 interfaces on swAgg
+  hosts: swAgg-1, swAgg-2
+
+  tasks:
+    - name: Edit L2 interfaces
+      cisco.nxos.nxos_l2_interfaces:
+        config: "{{ l2_interfaces }}"
+        state: merged
+
+
+- name: Configure L3 interfaces on swAgg
+  hosts: swAgg-1, swAgg-2
+
+  tasks:
+    - name: Edit L3 interfaces
+      cisco.nxos.nxos_l3_interfaces:
+        config: "{{ l3_interfaces }}"
+        state: merged
+
+    - name: Unshut L3 interfaces
+      cisco.nxos.nxos_config:
+        lines:
+          - no shutdown
+          - exit
+        parents: interface {{ item.name }}
+      loop: "{{ l3_interfaces }}"
+
+
+- name: Configure VRRP on swAgg-1
+  hosts: swAgg-1
+
+  tasks:
+    - name: Configure VRRP (swAgg-1)
+      cisco.nxos.nxos_vrrp:
+        interface: "{{ item.0.name }}"
+        group: "{{ item.0.name | regex_search('Vlan([0-9]+)', '\\1') | first }}"
+        vip: "{{ item.1.address | ansible.netcommon.ipv4 | ansible.netcommon.ipaddr('1') | ansible.netcommon.ipaddr('address') }}"
+        state: present
+        admin_state: no shutdown
+        preempt: true
+        priority: 100
+      loop: "{{ l3_interfaces | subelements('ipv4', 'skip_missing=True') }}"
+
+
+- name: Configure VRRP on swAgg-2
+  hosts: swAgg-2
+
+  tasks:
+    - name: Configure VRRP (swAgg-2)
+      cisco.nxos.nxos_vrrp:
+        interface: "{{ item.0.name }}"
+        group: "{{ item.0.name | regex_search('Vlan([0-9]+)', '\\1') | first }}"
+        vip: "{{ item.1.address | ansible.netcommon.ipv4 | ansible.netcommon.ipaddr('1') | ansible.netcommon.ipaddr('address') }}"
+        state: present
+        admin_state: no shutdown
+        preempt: true
+        priority: 50
+      loop: "{{ l3_interfaces | subelements('ipv4', 'skip_missing=True') }}"
+
+
+- name: Configure OSPF on swAgg
+  hosts: swAgg-1, swAgg-2
+  tags: test_this
+
+  tasks:
+    - name: Add OSPF config to interfaces
+      cisco.nxos.nxos_ospf_interfaces:
+        config:
+          - name: "{{ item.name }}"
+            address_family:
+              - afi: ipv4
+                passive_interface: yes
+                processes:
+                  - process_id: 1
+                    area:
+                      area_id: 0.0.0.0
+      loop: "{{ l3_interfaces }}"
+...

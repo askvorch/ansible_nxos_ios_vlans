@@ -1,0 +1,11 @@
+---
+- name: Check network reachability
+  hosts: all
+
+  tasks:
+    - name: Ping devices
+      command: ping -c 1 -w 3 {{ ansible_host }}
+      register: ping_result
+      changed_when: "'100% packet loss' not in ping_result.stdout"
+      delegate_to: localhost
+...

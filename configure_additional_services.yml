@@ -1,0 +1,72 @@
+---
+- name: Additional services for NXOS switches
+  hosts: nxos_hosts
+
+  tasks:
+    - name: Configure motd banner
+      cisco.nxos.nxos_banner:
+        banner: motd
+        text: |
+          ********************
+          * IaC Lab. {{ inventory_hostname }} *
+          ********************
+        state: present
+
+    - name: Configure NTP server
+      cisco.nxos.nxos_ntp:
+        server: 172.16.100.100
+        vrf_name: management
+        source_int: mgmt0
+        prefer: enabled
+        state: present
+
+    - name: Configure syslog server
+      cisco.nxos.nxos_logging:
+        dest: server
+        remote_server: 172.16.100.100
+        use_vrf: management
+        interface: mgmt0
+        state: present
+        facility: local5
+        level: 5
+        timestamp: milliseconds
+
+
+- name: Additional services for IOS switches
+  hosts: ios_hosts
+
+  tasks:
+    - name: Configure exec banner
+      cisco.ios.ios_banner:
+        banner: exec
+        text: |
+          *****************************
+          * IaC Lab. Device: {{ inventory_hostname }} *
+          *****************************
+        state: present
+
+    - name: Configure MOTD banner
+      cisco.ios.ios_banner:
+        banner: motd
+        state: absent
+
+    - name: Configure NTP server
+      cisco.ios.ios_ntp:
+        server: "vrf management 172.16.100.100"
+        source_int: Gi4
+        state: present
+
+    - name: Configure syslog server
+      cisco.ios.ios_logging_global:
+        config:
+          buffered:
+            severity: notifications
+          facility: local5
+          logging_on: enable
+          hosts:
+            - hostname: 172.16.100.100
+          source_interface:
+            - interface: Gi4
+              vrf: management
+        state: replaced
+...
